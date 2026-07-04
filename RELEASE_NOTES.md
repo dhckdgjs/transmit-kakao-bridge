@@ -1,8 +1,14 @@
-# TransmitKakaoBridge 0.2.4
+# TransmitKakaoBridge 0.2.5
 
 Transmit에서 카카오톡 대화 입력창으로 파일/폴더를 드래그하면 remote path를 텍스트로 붙여넣는 macOS helper입니다.
 
 ## 주요 개선사항
+
+- **Safari/Finder 미세 드래그 완화**  
+  전역 `leftMouseDragged` 모니터링을 제거했습니다. 이제 Safari/Finder 같은 다른 앱에서 드래그 이벤트가 발생해도 TK 앱이 관찰하지 않습니다.
+
+- **Transmit 감지 방식 변경**  
+  Transmit 위에서 `mouseDown`이 시작될 때 카카오톡 입력창 drop receiver를 바로 띄웁니다. 덕분에 드래그 중 반복 이벤트 감시 없이 Transmit 드롭을 받을 수 있습니다.
 
 - **네이티브 AppKit drop receiver 적용**  
   Hammerspoon pasteboard polling 대신 TextEdit와 같은 AppKit drag destination 구조로 전환했습니다.

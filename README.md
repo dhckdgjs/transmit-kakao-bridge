@@ -7,6 +7,7 @@ Transmit에서 카카오톡 대화 입력창으로 파일/폴더를 드래그하
 
 - Transmit에서 시작한 드래그만 감지합니다.
 - 카카오톡 창의 하단 입력 영역에만 드롭 receiver를 잠깐 띄웁니다.
+- Safari/Finder 같은 다른 앱의 드래그 이벤트는 모니터링하지 않습니다.
 - Transmit의 `public.utf8-plain-text` / URL payload에서 remote path를 읽습니다.
 - 여러 파일/폴더는 path 사이에 빈 줄 1줄을 넣어 붙여넣습니다.
 - 파일/이미지성 드롭 fallback은 기본값에서 꺼져 있으며, 메뉴바 `TK`에서 켤 수 있습니다.

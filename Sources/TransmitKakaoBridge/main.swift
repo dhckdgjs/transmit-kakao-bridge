@@ -3,7 +3,6 @@ import ApplicationServices
 import CoreGraphics
 import Foundation
 
-private let dragThresholdSquared: CGFloat = 100
 private let kakaoInputBottomRatio: CGFloat = 0.30
 private let kakaoMainWindowLeftGuardWidth: CGFloat = 260
 
@@ -45,13 +44,11 @@ private let transmitPromiseAcceptedTypes: [NSPasteboard.PasteboardType] = [
 
 @MainActor
 private final class BridgeState {
-    var startPoint: NSPoint?
     var sourceIsTransmit = false
     var overlaysShown = false
     var handledDrop = false
 
     func reset() {
-        startPoint = nil
         sourceIsTransmit = false
         overlaysShown = false
         handledDrop = false
@@ -584,13 +581,13 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func setupEventMonitors() {
-        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .leftMouseDragged, .leftMouseUp]) { [weak self] event in
+        globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .leftMouseUp]) { [weak self] event in
             Task { @MainActor in
                 self?.handle(event)
             }
         }
 
-        localMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .leftMouseDragged, .leftMouseUp]) { [weak self] event in
+        localMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .leftMouseUp]) { [weak self] event in
             self?.handle(event)
             return event
         }
@@ -619,19 +616,13 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
             let ownerName = WindowFinder.ownerName(at: point)
             state.reset()
             state.sourceIsTransmit = WindowFinder.isTransmit(ownerName: ownerName)
-            state.startPoint = point
 
-        case .leftMouseDragged:
-            guard state.sourceIsTransmit, let startPoint = state.startPoint else { return }
-
-            let dx = point.x - startPoint.x
-            let dy = point.y - startPoint.y
-
-            guard dx * dx + dy * dy > dragThresholdSquared else { return }
-            guard !state.overlaysShown else { return }
-
-            state.overlaysShown = true
-            overlayController?.show()
+            if state.sourceIsTransmit {
+                state.overlaysShown = true
+                overlayController?.show()
+            } else {
+                overlayController?.hide()
+            }
 
         case .leftMouseUp:
             guard state.sourceIsTransmit else { return }
