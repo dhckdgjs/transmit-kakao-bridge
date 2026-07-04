@@ -1,0 +1,14 @@
+.build/
+.swiftpm/
+DerivedData/
+
+*.log
+*.stdout.log
+
+.DS_Store
+*.xcuserdata/
+*.xcuserstate
+
+outputs/
+*.zip
+*.app/
