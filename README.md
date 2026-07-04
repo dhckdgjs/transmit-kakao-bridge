@@ -1,6 +1,7 @@
 # TransmitKakaoBridge
 
 Transmit에서 카카오톡 대화 입력창으로 파일/폴더를 드래그하면, Transmit이 드롭 payload에 넣어주는 remote path를 읽어서 카카오톡 입력창에 텍스트로 붙여넣는 macOS helper입니다.
+(최근 카카오톡 대화 입력창에서 해당 기능이 삭제되었음)
 
 ## 주요 기능
 
