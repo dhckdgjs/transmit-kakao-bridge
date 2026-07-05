@@ -4,6 +4,9 @@ Transmit에서 카카오톡 대화 입력창으로 파일/폴더를 드래그하
 
 ## 주요 개선사항
 
+- **Safari/Finder 앞 앱 상태에서는 마우스 감시 제거**  
+  Transmit이 실행 중이고 앞 앱이 카카오톡 또는 Transmit일 때만 TK의 전역 mouseDown/mouseUp 감시를 켭니다. Safari/Finder가 앞에 있으면 Transmit이 켜져 있어도 TK가 클릭에 관여하지 않습니다.
+
 - **Safari/Finder 미세 드래그 완화**  
   전역 `leftMouseDragged` 모니터링을 제거했습니다. 이제 Safari/Finder 같은 다른 앱에서 드래그 이벤트가 발생해도 TK 앱이 관찰하지 않습니다.
 

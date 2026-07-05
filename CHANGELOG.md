@@ -3,6 +3,9 @@
 ## 0.2.5
 
 - Safari/Finder에서 미세한 텍스트 선택이 발생할 수 있던 전역 `leftMouseDragged` 모니터링을 제거했습니다.
+- Transmit이 실행 중이고 앞 앱이 카카오톡 또는 Transmit일 때만 전역 mouseDown/mouseUp 감시를 켜도록 변경했습니다.
+- Safari/Finder가 앞 앱이면 Transmit이 켜져 있어도 마우스 감시를 제거합니다.
+- Transmit 종료 시 마우스 감시를 제거하고 overlay 상태를 초기화합니다.
 - Transmit 위에서 `mouseDown`이 시작될 때 카카오 입력창 drop receiver를 바로 띄우는 방식으로 변경했습니다.
 - 다른 앱의 드래그 이벤트에는 관여하지 않도록 이벤트 감시 범위를 축소했습니다.
 

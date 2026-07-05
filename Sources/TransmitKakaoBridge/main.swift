@@ -524,6 +524,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
     private var pasteController: PasteController?
     private var globalMonitor: Any?
     private var localMonitor: Any?
+    private var workspaceObservers: [NSObjectProtocol] = []
     private var statusItem: NSStatusItem?
     private var fileImageDropsItem: NSMenuItem?
     private var accessibilityItem: NSMenuItem?
@@ -543,7 +544,18 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
 
         setupStatusItem()
         requestAccessibilityIfNeeded()
-        setupEventMonitors()
+        setupTransmitLifecycleObserver()
+        refreshEventMonitorState()
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        teardownEventMonitors()
+
+        let center = NSWorkspace.shared.notificationCenter
+        for observer in workspaceObservers {
+            center.removeObserver(observer)
+        }
+        workspaceObservers.removeAll()
     }
 
     private func setupStatusItem() {
@@ -580,7 +592,79 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
         updateMenuState()
     }
 
+    private func setupTransmitLifecycleObserver() {
+        let center = NSWorkspace.shared.notificationCenter
+
+        let launchObserver = center.addObserver(
+            forName: NSWorkspace.didLaunchApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            let appName = (notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication)?.localizedName
+            guard WindowFinder.isTransmit(ownerName: appName) else { return }
+
+            Task { @MainActor in
+                self?.refreshEventMonitorState()
+            }
+        }
+
+        let terminateObserver = center.addObserver(
+            forName: NSWorkspace.didTerminateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            let appName = (notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication)?.localizedName
+            guard WindowFinder.isTransmit(ownerName: appName) else { return }
+
+            Task { @MainActor in
+                self?.refreshEventMonitorState()
+            }
+        }
+
+        let activateObserver = center.addObserver(
+            forName: NSWorkspace.didActivateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.refreshEventMonitorState()
+            }
+        }
+
+        workspaceObservers = [launchObserver, terminateObserver, activateObserver]
+    }
+
+    private func refreshEventMonitorState() {
+        if shouldMonitorMouseEvents() {
+            setupEventMonitors()
+        } else {
+            teardownEventMonitors()
+            overlayController?.hide()
+            state.reset()
+        }
+    }
+
+    private func shouldMonitorMouseEvents() -> Bool {
+        isTransmitRunning() && isBridgeContextActive()
+    }
+
+    private func isBridgeContextActive() -> Bool {
+        guard let appName = NSWorkspace.shared.frontmostApplication?.localizedName else {
+            return false
+        }
+
+        return WindowFinder.isKakao(ownerName: appName) || WindowFinder.isTransmit(ownerName: appName)
+    }
+
+    private func isTransmitRunning() -> Bool {
+        NSWorkspace.shared.runningApplications.contains { app in
+            WindowFinder.isTransmit(ownerName: app.localizedName)
+        }
+    }
+
     private func setupEventMonitors() {
+        guard globalMonitor == nil, localMonitor == nil else { return }
+
         globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .leftMouseUp]) { [weak self] event in
             Task { @MainActor in
                 self?.handle(event)
@@ -590,6 +674,28 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
         localMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .leftMouseUp]) { [weak self] event in
             self?.handle(event)
             return event
+        }
+
+        log.append("Mouse monitors enabled because Transmit is running and the active app is KakaoTalk or Transmit.")
+    }
+
+    private func teardownEventMonitors() {
+        var removedMonitor = false
+
+        if let globalMonitor {
+            NSEvent.removeMonitor(globalMonitor)
+            self.globalMonitor = nil
+            removedMonitor = true
+        }
+
+        if let localMonitor {
+            NSEvent.removeMonitor(localMonitor)
+            self.localMonitor = nil
+            removedMonitor = true
+        }
+
+        if removedMonitor {
+            log.append("Mouse monitors disabled outside the KakaoTalk/Transmit context.")
         }
     }
 
@@ -613,6 +719,11 @@ private final class AppDelegate: NSObject, NSApplicationDelegate {
 
         switch event.type {
         case .leftMouseDown:
+            guard shouldMonitorMouseEvents() else {
+                refreshEventMonitorState()
+                return
+            }
+
             let ownerName = WindowFinder.ownerName(at: point)
             state.reset()
             state.sourceIsTransmit = WindowFinder.isTransmit(ownerName: ownerName)

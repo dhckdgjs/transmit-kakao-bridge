@@ -5,6 +5,8 @@ Transmit에서 카카오톡 대화 입력창으로 파일/폴더를 드래그하
 
 ## 주요 기능
 
+- Transmit이 실행 중이고 앞 앱이 카카오톡 또는 Transmit일 때만 마우스 감시를 켭니다.
+- Safari/Finder가 앞에 있으면 Transmit이 켜져 있어도 클릭에는 관여하지 않습니다.
 - Transmit에서 시작한 드래그만 감지합니다.
 - 카카오톡 창의 하단 입력 영역에만 드롭 receiver를 잠깐 띄웁니다.
 - Safari/Finder 같은 다른 앱의 드래그 이벤트는 모니터링하지 않습니다.
